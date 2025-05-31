@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cold Storage Queen's Fridge Frenzy! DIVA EDITION 💅</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ff9a9e 100%);
+            color: #5D4037;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        #gameHost {
+            position: relative;
+            width: 95vw;      
+            height: 95vh;     
+            max-width: 1200px; 
+            max-height: 800px;
+            background-color: #E0F7FA;
+            border-radius: 25px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.25), inset 0 0 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-sizing: border-box;
+            overflow: hidden; 
+        }
+
+        canvas#gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background-color: transparent;
+            display: block;
+            cursor: grab; 
+        }
+
+        #gameUiContainer {
+            width: 100%;
+            padding: 10px 20px 20px 20px; 
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; 
+            position: relative;
+            z-index: 1;
+        }
+
+        #binsContainer {
+            display: flex;
+            justify-content: space-around; 
+            align-items: flex-end; 
+            width: 100%; 
+            gap: 10px; 
+            flex-shrink: 0;
+            margin-top: 10px; 
+        }
+
+        .bin {
+            flex-grow: 1; 
+            min-width: 250px; 
+            max-width: 24%;  
+            padding: 15px 10px; 
+            border-radius: 15px 15px 0 0; 
+            font-weight: bold;
+            font-size: clamp(0.9em, 1.6vw, 1.2em); 
+            cursor: default;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
+            box-shadow: 0 5px 8px rgba(0,0,0,0.1), inset 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+            background-clip: padding-box;
+            border-top: 5px solid transparent; 
+            min-height: 75px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+         .bin span {
+            word-break: break-word; /* Helps prevent overflow if text is long */
+        }
+
+        .bin:hover {
+            transform: translateY(-8px) scale(1.02); 
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2), inset 0 3px 6px rgba(0,0,0,0.08);
+        }
+        
+        #bin-name-missing { background-color: #FFEBEE; color: #B71C1C; border-bottom: 5px solid #FFCDD2; }
+        #bin-name-missing:hover { border-top-color: #E57373; background-color: #FFCDD2;}
+
+        #bin-date-missing { background-color: #E8EAF6; color: #1A237E; border-bottom: 5px solid #C5CAE9; }
+        #bin-date-missing:hover { border-top-color: #7986CB; background-color: #C5CAE9;}
+
+        #bin-correctly-labeled { background-color: #E8F5E9; color: #1B5E20; border-bottom: 5px solid #A5D6A7; } 
+        #bin-correctly-labeled:hover { border-top-color: #66BB6A; background-color: #C8E6C9;}
+
+        #bin-expired { background-color: #E0F2F1; color: #004D40; border-bottom: 5px solid #B2DFDB; }
+        #bin-expired:hover { border-top-color: #4DB6AC; background-color: #B2DFDB;}
+
+        .bin.drag-over { 
+            transform: translateY(-8px) scale(1.05) !important; 
+            box-shadow: 0 0 20px rgba(255, 223, 186, 0.9), 
+                        0 12px 20px rgba(0,0,0,0.25), 
+                        inset 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        #bin-name-missing.drag-over { border-top-color: #D32F2F !important; }
+        #bin-date-missing.drag-over { border-top-color: #303F9F !important; }
+        /* #bin-all-missing.drag-over { border-top-color: #FBC02D !important; } */ /* This bin was removed from HTML structure */
+        #bin-correctly-labeled.drag-over { border-top-color: #388E3C !important; } /* Added for consistency */
+        #bin-expired.drag-over { border-top-color: #00796B !important; }
+
+        #scoreBoard {
+            font-size: clamp(1.6em, 3.2vw, 2.4em); 
+            color: #D81B60;
+            font-weight: bold;
+            text-shadow: 2px 2px 3px #fff;
+            flex-shrink: 0;
+        }
+
+        #messageArea {
+            padding: 12px 18px; 
+            background-color: rgba(255, 255, 255, 0.92);
+            border-radius: 15px; 
+            font-size: clamp(1em, 1.9vw, 1.3em); 
+            color: #AD1457;
+            max-width: 90%;
+            width: 550px; 
+            box-shadow: 0 5px 10px rgba(0,0,0,0.12);
+            line-height: 1.5;
+            flex-shrink: 0;
+            min-height: 60px; 
+        }
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 154, 158, 0.97) 0%, rgba(254, 207, 239, 0.97) 50%, rgba(255, 154, 158, 0.97) 100%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;    
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            overflow: hidden; 
+        }
+
+        .intro-content-centered {
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 30px; 
+            border-radius: 30px;
+            box-shadow: 0 15px 40px rgba(80, 40, 40, 0.3);
+            max-width: 850px; 
+            width: 90%;
+            color: #4A3B34;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;    
+            gap: 15px; 
+        }
+
+        #introImage {
+            max-width: 320px; 
+            width: 60%; 
+            max-height: 300px; 
+            height: auto;
+            border-radius: 15px;
+        }
+        
+        .intro-text-block h1 {
+            color: #E91E63; 
+            font-size: clamp(1.8em, 4.5vw, 2.5em); 
+            margin-bottom: 5px;
+            margin-top: 0; 
+        }
+        
+        .intro-text-block h2 {
+            color: #AD1457; 
+            font-size: clamp(1.3em, 3vw, 1.7em);
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .intro-text-block p {
+            font-size: clamp(0.9em, 2vw, 1.1em); 
+            line-height: 1.55;
+            margin-bottom: 10px; 
+            color: #5D4037;
+        }
+
+        .intro-text-block p.emphasis-text { 
+            font-size: clamp(1em, 2.5vw, 1.3em);
+            font-weight: bold;
+            color: #D81B60; 
+            margin: 15px 0; 
+        }
+
+        .intro-text-block p strong {
+            color: #C2185B;
+            font-weight: bold;
+        }
+
+        #startButton, #startEndlessButton { /* Combined for base styles */
+            margin-top: 5px; /* Reduced margin for potentially stacked buttons */
+            background-color: #FF69B4; 
+            color: white; 
+            padding: 15px 35px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: clamp(1.1em, 2.3vw, 1.4em);
+            cursor: pointer; 
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            box-shadow: 0 5px 8px rgba(0,0,0,0.15);
+            width: 90%; 
+            max-width: 380px;
+        }
+        #startButton:hover, #startEndlessButton:hover { 
+            background-color: #E91E63; 
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+        }
+        #startButtonsContainer { /* Already styled in HTML, but ensure it's centered if needed */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #startEndlessButton {
+            background-color: #9C27B0; 
+        }
+        #startEndlessButton:hover {
+            background-color: #7B1FA2; 
+        }
+
+        #comboDisplay {
+            font-size: clamp(1.4em, 2.8vw, 2em); 
+            color: #FF69B4; 
+            font-weight: bold;
+            margin-top: 8px;
+            min-height: 1.2em; 
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out; 
+            opacity: 0; 
+            transform: scale(0.8); 
+        }
+
+        #comboDisplay.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #comboDisplay.pop {
+            animation: popEffect 0.3s ease-out;
+        }
+
+        @keyframes popEffect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        #gameTopHud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            align-items: flex-start;
+            z-index: 20;
+            pointer-events: none;
+            font-family: inherit;
+        }
+
+        #gameTimerDisplay {
+            font-size: clamp(1em, 2.5vw, 1.4em);
+            color: #C2185B;
+            font-weight: bold;
+            width: 25%; 
+            text-align: left; 
+        }
+
+        /* #scoreBoard styling is further up, this is just for layout within HUD */
+        #scoreBoard { 
+            width: 50%; 
+            text-align: center; 
+        }
+
+        #comboContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            text-align: right;
+            width: 25%; 
+        }
+
+        /* #comboDisplay specific to HUD layout */
+        #comboDisplay {
+            margin-top: 0; 
+            margin-bottom: 5px; 
+            min-height: 1em; 
+        }
+
+        #comboTimerBarContainer { 
+            width: 100px; 
+            height: 8px;  
+            background-color: rgba(93, 64, 55, 0.2); 
+            border-radius: 4px; 
+            overflow: hidden; 
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.15); 
+            margin: 0; 
+            display: none; 
+        }
+
+        #comboTimerBar { 
+            width: 100%; 
+            height: 100%;
+            background-color: #FF69B4; 
+            border-radius: 4px; 
+            transition: width 0.1s linear; 
+        }
+
+        .bin.expand {
+            transform: translateY(-12px) scale(1.1) !important;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.25), inset 0 3px 6px rgba(0,0,0,0.1);
+            border-width: 6px !important;
+            z-index: 5; 
+        }
+
+        @keyframes itemPop {
+          0% { transform: scale(1) rotate(0deg); }
+          30% { transform: scale(1.15) rotate(1deg); }
+          60% { transform: scale(0.98) rotate(-1deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .item-pop {
+          animation: itemPop 0.4s ease-out;
+        }
+
+        /* == MOBILE OPTIMIZATIONS (Mainly Portrait) == */
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            body {
+                min-height: 100vh; 
+                 -webkit-text-size-adjust: 100%; /* Prevent font scaling on iOS */
+            }
+
+            #gameHost {
+                /* Adjust if needed, but 95vw/95vh should adapt well */
+                border-radius: 15px; /* Slightly smaller radius */
+            }
+
+            #gameTopHud {
+                padding: 8px; 
+                top: 8px; left: 8px; right: 8px;
+            }
+            #gameTimerDisplay { font-size: clamp(0.75em, 2.8vw, 1em) !important; }
+            #scoreBoard { font-size: clamp(0.9em, 3.3vw, 1.3em) !important; } /* Adjusted from previous clamp */
+            #comboContainer #comboDisplay { font-size: clamp(0.75em, 2.8vw, 1em) !important; } /* Adjusted from previous clamp */
+            #comboTimerBarContainer { width: 60px !important; height: 5px !important; }
+
+
+            #gameUiContainer {
+                padding: 8px 8px 10px 8px; 
+                gap: 6px; 
+            }
+
+            #binsContainer {
+                flex-direction: column; 
+                align-items: center;    
+                width: 100%;
+                gap: 5px;               
+                margin-top: 5px;
+            }
+
+            .bin {
+                width: 90%;             
+                max-width: 320px;       
+                min-width: unset;       
+                /* max-width: 90%;  removed as width:90% is more direct */
+                padding: 8px 6px;      
+                min-height: 40px;       
+                font-size: clamp(0.75em, 3.2vw, 1em); 
+                border-radius: 8px !important; 
+                border-top-width: 3px !important; 
+                border-bottom-width: 3px !important; 
+            }
+            .bin span { 
+                white-space: normal; 
+            }
+
+
+            #messageArea {
+                width: 90%;
+                max-width: 350px;
+                padding: 6px 10px;
+                font-size: clamp(0.75em, 2.8vw, 1em);
+                min-height: 35px;
+                line-height: 1.3;
+            }
+            #todaysDateDisplay {
+                font-size: 0.7em;
+                margin-bottom: 2px;
+            }
+
+            /* Intro Screen Adjustments */
+            .intro-content-centered {
+                padding: 15px;
+                gap: 8px;
+                max-height: 90vh;
+                overflow-y: auto; 
+            }
+            #introImage {
+                max-width: 180px; 
+                width: 45%;
+            }
+            .intro-text-block h1 { font-size: clamp(1.4em, 4.5vw, 1.8em); }
+            .intro-text-block h2 { font-size: clamp(1em, 3.5vw, 1.3em); }
+            .intro-text-block p { font-size: clamp(0.75em, 2.8vw, 0.9em); }
+            .intro-text-block p.emphasis-text { font-size: clamp(0.85em, 3.2vw, 1.1em); }
+            
+            #startButtonsContainer {
+                margin-top: 15px;
+                gap: 8px;
+            }
+            #startButton, #startEndlessButton { /* Apply to both */
+                padding: 10px 18px;
+                font-size: clamp(0.85em, 3.2vw, 1.1em);
+                max-width: 300px;
+            }
+
+            /* Game Over Screen */
+            #gameOverScreen div { 
+                padding: 20px;
+                max-width: 90%;
+            }
+            #gameOverScreen h1 { font-size: clamp(1.5em, 5.5vw, 2em); }
+            #gameOverScreen #finalScoreText { font-size: clamp(1.1em, 4vw, 1.5em); }
+            #gameOverScreen p { font-size: clamp(0.85em, 3.2vw, 1.1em); }
+            #gameOverScreen #playAgainButton {
+                padding: 10px 20px;
+                font-size: clamp(0.9em, 3.5vw, 1.2em);
+            }
+        }
+
+    </style>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="introScreen">
+        <div class="intro-content-centered"> 
+            <img src="splash.png" alt="Cold Storage Queen" id="introImage">
+            
+            <div class="intro-text-block">
+                <h1>Oh-em-gee, hi! 💋</h1>
+                <h2>Your Cold Storage Queen 🧚‍♀️✨ is on high alert!</h2>
+                <p>My fridge patrol just found a TOTAL disaster: ancient, unlabeled mystery gunk (was it... tuna?! 🤢). Expired since, like, the dawn of time! Cleopatra called, she wants her lunch back! 🏺🍣</p>
+                <p>Seriously, babes, this fridge is NOT a haunted house for forgotten food! 👻🚫</p>
+                <p class="emphasis-text">✨TRASHED. YEETED. GONE.✨</p>
+                <p>The law: <strong>LABEL. YOUR. STUFF.</strong> Or it's next! 😉</p>
+                <p>Help me sort this out & make the fridge sparkle! Kthxbye! 💖👑</p>
+            </div>
+            <div id="startButtonsContainer">
+                <button id="startButton">Regular Mode: Timed Chaos!</button>
+                <button id="startEndlessButton">Endless Mode: Fridge Zen</button>
+            </div>
+        </div>
+    </div>
+<div id="gameHost" style="display: none;">
+        <canvas id="gameCanvas"></canvas>
+        <div id="gameTopHud">
+    <div id="gameTimerDisplay">Time: 60s</div>
+    <div id="scoreBoard">Score: 0 ✨</div>
+    <div id="comboContainer">
+        <div id="comboDisplay"></div>
+        <div id="comboTimerBarContainer">
+            <div id="comboTimerBar"></div>
+        </div>
+    </div>
+</div>
+        <div id="gameUiContainer">
+            <div id="todaysDateDisplay" style="font-size: 0.9em; color: #785549; margin-bottom: 5px;">Today: MM/DD/YYYY</div>
+            <div id="messageArea">Sorting is, like, SO important.</div>
+            <div id="binsContainer">
+                <div class="bin" id="bin-correctly-labeled" data-bin-type="correctly_labeled"><span>Label Perfection! ✨</span></div>
+                <div class="bin" id="bin-name-missing" data-bin-type="name_missing"><span>Name Missing?</span></div>
+                <div class="bin" id="bin-date-missing" data-bin-type="date_missing"><span>Date Missing?</span></div>
+                <div class="bin" id="bin-expired" data-bin-type="expired"><span>Expired Babe!</span></div>
+            </div>
+        </div> 
+    </div> 
+     <div id="gameOverScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 154, 158, 0.95); z-index: 2000; display:flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #4A3B34; padding: 20px; box-sizing: border-box;">
+       <div style="background-color: rgba(255, 255, 255, 0.98); padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(80, 40, 40, 0.3); max-width: 600px;">
+           <h1 style="color: #E91E63; font-size: clamp(2em, 5vw, 2.8em); margin-bottom: 15px;">Time's Up, Gorgeous! 💋</h1>
+           <p id="finalScoreText" style="font-size: clamp(1.5em, 3.5vw, 2em); margin-bottom: 25px; color: #AD1457; font-weight: bold;">Your Score: 0 ✨</p>
+           <p style="font-size: clamp(1em, 2.2vw, 1.3em); margin-bottom: 30px;">You slayed that fridge (almost)! Want another go?</p>
+           <button id="playAgainButton" style="background-color: #FF69B4; color: white; padding: 15px 35px; border: none; border-radius: 12px; font-size: clamp(1.1em, 2.3vw, 1.4em); cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif; box-shadow: 0 5px 8px rgba(0,0,0,0.15);">Play Again, Hun!</button>
+       </div>
+   </div>
+
+    <script>
+
+    let gameMode = 'regular'; 
+    let itemsSortedCount = 0;
+
+   const gameTimerDisplay = document.getElementById('gameTimerDisplay');
+   const gameOverScreen = document.getElementById('gameOverScreen');
+   const finalScoreText = document.getElementById('finalScoreText');
+   const playAgainButton = document.getElementById('playAgainButton');
+
+   const comboTimerBarContainer = document.getElementById('comboTimerBarContainer');
+   const comboTimerBar = document.getElementById('comboTimerBar');
+   let comboTimeoutStartTime = 0;
+
+   const GAME_DURATION = 60; 
+   let gameTimeRemaining = GAME_DURATION;
+   let gameTimerIntervalId = null;
+   let isGameOver = false;
+
+        const gameHost = document.getElementById('gameHost');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreBoard = document.getElementById('scoreBoard');
+        const messageArea = document.getElementById('messageArea');
+        const binsElements = {
+            name_missing: document.getElementById('bin-name-missing'),
+            date_missing: document.getElementById('bin-date-missing'),
+            correctly_labeled: document.getElementById('bin-correctly-labeled'), 
+            expired: document.getElementById('bin-expired')
+        };
+
+        const introScreen = document.getElementById('introScreen');
+        const startButton = document.getElementById('startButton');
+        const todaysDateDisplay = document.getElementById('todaysDateDisplay');
+        const startEndlessButton = document.getElementById('startEndlessButton');
+
+        let score = 0;
+        let currentItem = null;
+        // milkImage was preloading one image, now handled by preloadItemImages
+        let assetsLoaded = false;
+        
+        let currentVoiceAudio = null; 
+        let isVoicePlaying = false;
+        const dingSound = new Audio('audio/ding.mp3'); 
+        const buzzSound = new Audio('audio/buzz.mp3');
+        const popSound = new Audio('audio/pop.mp3?v=1');
+
+
+        let currentCombo = 0;
+        const maxCombo = 10;
+        const comboMessages = ["", "Cute.", "Okay!", "Good!", "Sweet!", "Amazing!", "Ice Cold", "ICONIC!!", "QUEEN!!!", "GODDESS 👑", "✨SLAY MAX✨"]; 
+        let comboTimeoutId = null; 
+        const COMBO_TIMEOUT_DURATION = 4500; 
+
+        const comboDisplay = document.getElementById('comboDisplay');
+
+        const bgMusic = new Audio('audio/fridgemusic.mp3');
+        bgMusic.loop = true;
+        bgMusic.volume = 0.2; 
+
+
+        const possibleItems = [
+            { id: "milk", displayName: "Milk", imageSrc: "milk.png", baseOwnerName: null },
+            { id: "sushi", displayName: "Sushi", imageSrc: "sushi.png", baseOwnerName: null },
+            { id: "yogurt", displayName: "Yogurt", imageSrc: "yogurt.png", baseOwnerName: null },
+            { id: "pepsi", displayName: "Pepsi", imageSrc: "pepsi.png", baseOwnerName: null },
+            { id: "banana", displayName: "Banana", imageSrc: "banana.png", baseOwnerName: null },
+            { id: "salad", displayName: "Salad", imageSrc: "salad.png", baseOwnerName: null },
+            { id: "whiskey", displayName: "Whiskey", imageSrc: "whiskey.png", baseOwnerName: null },
+            { id: "pizza", displayName: "Pizza", imageSrc: "pizza.png", baseOwnerName: null },
+            { id: "wine", displayName: "Wine", imageSrc: "wine.png", baseOwnerName: null },
+            { id: "cheese", displayName: "Cheese", imageSrc: "cheese.png", baseOwnerName: null },
+            { id: "noodle", displayName: "Noodles", imageSrc: "noodle.png", baseOwnerName: null },
+            { id: "hunny", displayName: "Hunny", imageSrc: "hunny.png", baseOwnerName: null },
+            { id: "baguette", displayName: "Baguette", imageSrc: "baguette.png", baseOwnerName: null },
+            { id: "redbull", displayName: "Redbull", imageSrc: "redbull.png", baseOwnerName: null },
+            { id: "poison", displayName: "Poison", imageSrc: "poison.png", baseOwnerName: null },
+            { id: "sandwich", displayName: "Sandwich", imageSrc: "sandwich.png", baseOwnerName: null },
+            { id: "kuromi", displayName: "Kuromi", imageSrc: "kuromi.png", baseOwnerName: null },
+            { id: "protein", displayName: "Protein", imageSrc: "protein.png", baseOwnerName: null },
+            { id: "strong", displayName: "StrongZero", imageSrc: "strong.png", baseOwnerName: null },
+            { id: "cake", displayName: "Cake", imageSrc: "cake.png", baseOwnerName: null },
+            { id: "beer", displayName: "Beer", imageSrc: "beer.png", baseOwnerName: null },
+            { id: "controller", displayName: "Controller", imageSrc: "controller.png", baseOwnerName: null },
+            { id: "waffle", displayName: "Waffle", imageSrc: "waffle.png", baseOwnerName: null },
+            { id: "starbucks", displayName: "Starbucks", imageSrc: "starbucks.png", baseOwnerName: null },
+            { id: "broccoli", displayName: "Broccoli", imageSrc: "broccoli.png", baseOwnerName: null }
+        ];
+        const itemImages = {}; 
+        const funnyOwnerNames = [
+            "Queen B", "Not Yours", "Snack Goblin", "Sir Reginald III", "Princess Sparklefart", "Captain Crunch",
+            "Grob", "Saucy Susan", "Lord Leftovers", "Fran", "Stefano", "Veronica", "Meowgan",
+            "Dr. Horrible", "Kenzo", "Miguel E. C.", "Mark Scout", "The A.C. Guy", "Jeff", "Ryu",
+            "Leon", "Kuromi", "Mr. Asparago", "Sabrina C.", "D. Cooper", "F. Mulder", "Abby Normal",
+            "El Barto", "W. Pooh"
+        ];
+
+      let assetsToLoad = possibleItems.length;
+        let assetsLoadedCount = 0;
+        
+        function assetLoaded() {
+            assetsLoadedCount++;
+            if (assetsLoadedCount === assetsToLoad) {
+                assetsLoaded = true;
+                console.log("All item assets loaded, hun! ✨");
+            }
+        }
+
+        function preloadItemImages() {
+            if (possibleItems.length === 0) { 
+                assetsLoaded = true; 
+                return;
+            }
+            possibleItems.forEach(itemDef => {
+                const img = new Image();
+                img.onload = assetLoaded;
+                img.onerror = () => {
+                    console.error(`OMG, could not load image for ${itemDef.id} at ${itemDef.imageSrc}! Fix it, babe!`);
+                    assetLoaded(); 
+                };
+                img.src = itemDef.imageSrc;
+                itemImages[itemDef.id] = img;
+            });
+        }
+        preloadItemImages();
+
+        const dateFormats = [
+            { format: (d) => `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`, name: "MM/DD/YYYY" },
+            { format: (d) => `${d.getDate()}-${d.toLocaleString('default', { month: 'short' })}-${d.getFullYear()}`, name: "DD-Mon-YYYY" },
+            { format: (d) => `${d.getFullYear()}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getDate().toString().padStart(2, '0')}`, name: "YYYY.MM.DD" },
+            { format: (d) => d.toLocaleDateString('en-GB'), name: "DD/MM/YYYY (UK)" },
+           { format: (d) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }), name: "Wkd, Mon D, YYYY" }
+        ];
+
+        function getRandomDateFormat(date) {
+            if (!date) return "??.??";
+            const randomFormatter = dateFormats[Math.floor(Math.random() * dateFormats.length)];
+            return randomFormatter.format(date);
+        }
+
+        const ITEM_ORIGINAL_WIDTH = 1024;
+        const ITEM_ORIGINAL_HEIGHT = 1024;
+        const ITEM_SCALE_VS_CANVAS_WIDTH = 0.3; 
+        const POST_IT_SCALE_VS_ITEM_DIMENSION = 0.4; 
+        const POST_IT_FONT_SCALE_VS_LABEL_HEIGHT = 0.16; 
+        const MIN_POST_IT_FONT_SIZE = 12; // Adjusted slightly for mobile if needed
+        const MAX_POST_IT_FONT_SIZE = 16; 
+        const LABEL_FONT_SIZE_FALLBACK = 16; 
+        const labelTextColors = ['#000000', '#00008B', '#4B0082'];
+        let currentlyOverlappedBinType = null;
+
+        // Helper function to get consistent coordinates from mouse or touch events
+        function getEventCoordinates(e, canvasElement) {
+            const rect = canvasElement.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) { // For touchstart, touchmove
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) { // For touchend
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            } else { // For mouse events
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            if (typeof clientX === 'undefined' || typeof clientY === 'undefined') {
+                 // Fallback for safety, though should be populated by primary events
+                return { 
+                    x: (e.offsetX !== undefined) ? e.offsetX : 0, 
+                    y: (e.offsetY !== undefined) ? e.offsetY : 0, 
+                    clientX: (e.clientX !== undefined) ? e.clientX : 0, 
+                    clientY: (e.clientY !== undefined) ? e.clientY : 0
+                };
+            }
+            return {
+                x: clientX - rect.left, // Canvas-relative X
+                y: clientY - rect.top,  // Canvas-relative Y
+                clientX: clientX,       // Viewport-relative X
+                clientY: clientY        // Viewport-relative Y
+            };
+        }
+
+
+         function checkItemOverlapWithBins() {
+            if (!currentItem) return null;
+            const canvasRect = canvas.getBoundingClientRect();
+            const itemRectVP = { 
+                left: canvasRect.left + currentItem.x,
+                right: canvasRect.left + currentItem.x + currentItem.width,
+                top: canvasRect.top + currentItem.y,
+                bottom: canvasRect.top + currentItem.y + currentItem.height,
+                centerX: canvasRect.left + currentItem.x + currentItem.width / 2,
+                centerY: canvasRect.top + currentItem.y + currentItem.height / 2
+            };
+            let overlappedBin = null;
+            for (const binType in binsElements) {
+                const binEl = binsElements[binType];
+                const binRectVP = binEl.getBoundingClientRect(); 
+                const itemEffectiveBottom = itemRectVP.bottom - (currentItem.height * 0.2); 
+                if (
+                    itemRectVP.left < binRectVP.right &&
+                    itemRectVP.right > binRectVP.left &&
+                    itemRectVP.top < binRectVP.bottom && 
+                    itemEffectiveBottom > binRectVP.top 
+                ) {
+                    if (itemRectVP.centerX > binRectVP.left && itemRectVP.centerX < binRectVP.right) {
+                        overlappedBin = binType;
+                        break; 
+                    }
+                    if (!overlappedBin) {
+                        overlappedBin = binType;
+                    }
+                }
+            }
+            return overlappedBin;
+        }
+
+        function resizeCanvas() {
+            const hostRect = gameHost.getBoundingClientRect();
+            if (hostRect.width <= 0 || hostRect.height <= 0) { return false; }
+            canvas.width = hostRect.width;
+            canvas.height = hostRect.height;
+
+            if (currentItem && !currentItem.isDragging) {
+                let newImageDrawWidth = canvas.width * ITEM_SCALE_VS_CANVAS_WIDTH;
+                let aspectRatio = ITEM_ORIGINAL_HEIGHT / ITEM_ORIGINAL_WIDTH;
+                if (ITEM_ORIGINAL_WIDTH === 0) aspectRatio = 1;
+                let newImageDrawHeight = newImageDrawWidth * aspectRatio; 
+                const maxPixelDrawSize = Math.min(canvas.width * 0.6, canvas.height * 0.5);
+                const minPixelDrawSize = Math.max(60, canvas.width * 0.1); // Min size 60px for touch
+                if (newImageDrawWidth > maxPixelDrawSize) { newImageDrawWidth = maxPixelDrawSize; newImageDrawHeight = newImageDrawWidth * aspectRatio; }
+                if (newImageDrawHeight > maxPixelDrawSize) { newImageDrawHeight = maxPixelDrawSize; newImageDrawWidth = newImageDrawHeight / aspectRatio; }
+                if (newImageDrawWidth < minPixelDrawSize) { newImageDrawWidth = minPixelDrawSize; newImageDrawHeight = newImageDrawWidth * aspectRatio; }
+                if (newImageDrawHeight < minPixelDrawSize) { newImageDrawHeight = minPixelDrawSize; newImageDrawWidth = newImageDrawHeight / aspectRatio; }
+                newImageDrawWidth = Math.max(1, newImageDrawWidth);
+                newImageDrawHeight = Math.max(1, newImageDrawHeight);
+
+                const newItemDisplayCanvas = createItemCanvas(
+                    itemImages[currentItem.itemDefinition.id],
+                    currentItem.nameForPostIt,        
+                    currentItem.dateObjForPostIt,     
+                    currentItem.labelType,
+                    newImageDrawWidth,
+                    newImageDrawHeight,
+                    currentItem.postItTargetSize, currentItem.postItWidthFactor, currentItem.postItHeightFactor,
+                    currentItem.postItNoteRotation, currentItem.postItTextRotation,
+                    currentItem.postItBiasXFactor, currentItem.postItBiasYFactor,
+                    currentItem.postItJitterXFactor, currentItem.postItJitterYFactor,
+                    currentItem.formattedExpDateString, 
+                    currentItem.labelTextColor
+                );
+
+                if (newItemDisplayCanvas && newItemDisplayCanvas.width > 0 && newItemDisplayCanvas.height > 0) {
+                    currentItem.imageCanvas = newItemDisplayCanvas;
+                    currentItem.width = newItemDisplayCanvas.width; 
+                    currentItem.height = newItemDisplayCanvas.height;
+                    // Adjust targetY calculation to consider HUD and UI elements heights dynamically
+                    const topHudHeight = document.getElementById('gameTopHud') ? document.getElementById('gameTopHud').offsetHeight : 0;
+                    const uiContainerHeight = document.getElementById('gameUiContainer') ? document.getElementById('gameUiContainer').offsetHeight : 0;
+                    const availableCanvasHeight = canvas.height - topHudHeight - uiContainerHeight;
+                    const itemSpawnAreaTop = topHudHeight + (availableCanvasHeight * 0.1); // Spawn slightly below HUD
+                    const itemSpawnAreaHeight = availableCanvasHeight * 0.7; // Use 70% of available height for item centering
+
+                    currentItem.targetY = itemSpawnAreaTop + (itemSpawnAreaHeight / 2) - (currentItem.height / 2);
+                    // Ensure targetY is not too low, push up if needed
+                    currentItem.targetY = Math.max(topHudHeight + 10, currentItem.targetY); 
+                    // And not too high either
+                    currentItem.targetY = Math.min(canvas.height - uiContainerHeight - currentItem.height -10, currentItem.targetY);
+
+
+                    currentItem.x = canvas.width / 2 - currentItem.width / 2;
+                    if (!currentItem.isFalling) { 
+                        currentItem.y = currentItem.targetY;
+                    }
+                } else {
+                    console.error("RESIZE: createItemCanvas failed.");
+                }
+            }
+            return true;
+        }
+
+        function updateTodaysDateDisplay() {
+            const today = new Date();
+            const options = { year: 'numeric', month: 'short', day: 'numeric' }; 
+            todaysDateDisplay.textContent = `Today: ${today.toLocaleDateString(undefined, options)}`;
+        }
+
+        const sassyMessages = {
+            correct: [
+                { text: "Yasss, Queen! Nailed it! 💅", voice: "audio/correct1.mp3" },
+                { text: "You're, like, a fridge sorting PRO! ✨", voice: "audio/correct2.mp3" },
+                { text: "Slay that organization!", voice: "audio/correct3.mp3" },
+                { text: "Buh-Bye 💋", voice: "audio/correct4.mp3" },
+                { text: "Literal queen. 👑", voice: "audio/correct5.mp3" },
+                { text: "You're a chilling machine!", voice: "audio/correct6.mp3" },
+                { text: "Ice ice baby!", voice: "audio/correct7.mp3" }
+            ],
+            incorrect: [
+                { text: "Oopsie! Not quite, sweetie. 😬", voice: "audio/incorrect1.mp3" },
+                { text: "Hmm, let's re-think that one, babe. 🤔", voice: "audio/incorrect2.mp3" },
+                { text: "Nope. Not even close! 🤔", voice: "audio/incorrect3.mp3" },
+                { text: "Wrong bin, darling! 🤔", voice: "audio/incorrect4.mp3" },
+                { text: "Nu-uh. Try again. 💅", voice: "audio/incorrect5.mp3" },
+                { text: "Girl... really? 😒", voice: "audio/incorrect6.mp3" },
+                { text: "Uh... No! 😒", voice: "audio/incorrect7.mp3" }
+                
+            ],
+            spawn: [
+                { text: "Ooh, what's this mystery item? 👀", voice: "audio/spawn1.mp3" },
+                { text: "Fresh delivery! Where does this go, babe? 🚚", voice: "audio/spawn2.mp3" },
+                { text: "Incoming drama. 🧊", voice: "audio/spawn3.mp3" },
+                { text: "Who dis?", voice: "audio/spawn4.mp3" },
+                { text: "Let's tidy up!", voice: "audio/spawn5.mp3" },
+                { text: "Is it expired?", voice: "audio/spawn6.mp3" },
+                { text: "Who left this?", voice: "audio/spawn7.mp3" }
+            ],
+            intro: [ 
+                 { text: "Oh-em-gee hi 💋 It's your Cold Storage Queen 🧚‍♀️✨", voice: "audio/intro_greeting.mp3" }
+            ]
+        };
+
+       function playSfx(sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.warn("SFX play failed", e));
+        }
+
+        function playVoice(voicePath) {
+            if (isVoicePlaying || !voicePath) { 
+                return;
+            }
+            if (currentVoiceAudio) { 
+                currentVoiceAudio.pause();
+            }
+            isVoicePlaying = true;
+            currentVoiceAudio = new Audio(voicePath);
+            currentVoiceAudio.play().catch(e => {
+                console.warn("Voice play failed", e);
+                isVoicePlaying = false; 
+            });
+            currentVoiceAudio.onended = () => {
+                isVoicePlaying = false;
+                currentVoiceAudio = null;
+            };
+            currentVoiceAudio.onerror = () => { 
+                isVoicePlaying = false;
+                currentVoiceAudio = null;
+            };
+        }
+
+        function getRandomMessage(type) {
+            const messagesArray = sassyMessages[type];
+            if (!messagesArray || messagesArray.length === 0) {
+                return { text: "Hmm, I'm speechless!", voice: null };
+            }
+            return messagesArray[Math.floor(Math.random() * messagesArray.length)];
+        }
+
+        function updateScore(change) { 
+            if (gameMode === 'regular') {
+                score += change;
+                scoreBoard.textContent = `Score: ${score} ✨`;
+            } else { 
+                scoreBoard.textContent = `Sorted: ${itemsSortedCount} 💅`;
+            }
+        }
+
+        function showMessageAndPlayVoice(messageObject) {
+            messageArea.textContent = messageObject.text;
+            playVoice(messageObject.voice); 
+        }
+
+        function createItemCanvas(baseImage, nameForPostIt, dateObjForPostIt, labelType, 
+                                targetItemDrawWidth, targetItemDrawHeight,
+                                p_targetSize, p_widthFactor, p_heightFactor, 
+                                p_noteRotation, p_textRotation,
+                                p_biasXFactor, p_biasYFactor, 
+                                p_jitterXFactor, p_jitterYFactor,
+                                p_formattedExpDateString, p_labelTextColor) { 
+            
+            targetItemDrawWidth = Math.max(1, targetItemDrawWidth || 100);
+            targetItemDrawHeight = Math.max(1, targetItemDrawHeight || 100);
+
+            const itemCanvasEl = document.createElement('canvas'); // Renamed to avoid conflict with global 'canvas'
+            const itemCtx = itemCanvasEl.getContext('2d');
+            
+            const safe_p_targetSize = Math.max(20, p_targetSize || POST_IT_SCALE_VS_ITEM_DIMENSION * Math.min(targetItemDrawWidth, targetItemDrawHeight) );
+            const labelWidth = Math.max(10, safe_p_targetSize * (1 + p_widthFactor)); 
+            const labelHeight = Math.max(10, safe_p_targetSize * (1 + p_heightFactor)); 
+            const maxOverhang = Math.max(labelWidth, labelHeight) * 0.6; 
+            itemCanvasEl.width = targetItemDrawWidth + maxOverhang;
+            itemCanvasEl.height = targetItemDrawHeight + maxOverhang;
+            
+            const itemImageX = (itemCanvasEl.width - targetItemDrawWidth) / 2;
+            const itemImageY = (itemCanvasEl.height - targetItemDrawHeight) / 2;
+
+            itemCtx.imageSmoothingEnabled = false; 
+            if (baseImage && baseImage.complete && baseImage.naturalWidth !== 0) {
+                itemCtx.drawImage(baseImage, itemImageX, itemImageY, targetItemDrawWidth, targetItemDrawHeight);
+            } else {
+                itemCtx.imageSmoothingEnabled = true;
+                itemCtx.fillStyle = 'grey';
+                itemCtx.fillRect(itemImageX, itemImageY, targetItemDrawWidth, targetItemDrawHeight);
+                itemCtx.fillStyle = 'white'; itemCtx.textAlign = 'center'; itemCtx.textBaseline = 'middle';
+                itemCtx.font = `${LABEL_FONT_SIZE_FALLBACK * 1.5}px Arial`; 
+                itemCtx.fillText("?", itemImageX + targetItemDrawWidth/2, itemImageY + targetItemDrawHeight/2);
+                itemCtx.imageSmoothingEnabled = false; 
+            }
+
+            itemCtx.imageSmoothingEnabled = true; 
+            itemCtx.imageSmoothingQuality = 'medium'; // 'medium' is a good balance for mobile
+
+            itemCtx.save(); 
+            const finalSideBiasX = targetItemDrawWidth * p_biasXFactor + labelWidth * p_biasXFactor * 0.2;
+            const finalSideBiasY = targetItemDrawHeight * p_biasYFactor + labelHeight * p_biasYFactor * 0.2;
+            const finalRandomJitterX = targetItemDrawWidth * p_jitterXFactor;
+            const finalRandomJitterY = targetItemDrawHeight * p_jitterYFactor;
+            const labelCenterX = itemImageX + targetItemDrawWidth / 2 + finalSideBiasX + finalRandomJitterX;
+            const labelCenterY = itemImageY + targetItemDrawHeight / 2 + finalSideBiasY + finalRandomJitterY;
+            
+            itemCtx.translate(labelCenterX, labelCenterY); 
+            itemCtx.rotate(p_noteRotation);
+            itemCtx.globalAlpha = 0.93; 
+            itemCtx.fillStyle = '#FFFACD'; 
+            itemCtx.shadowColor = 'rgba(0,0,0,0.25)'; 
+            itemCtx.shadowBlur = 6; // Slightly reduced blur for mobile
+            itemCtx.shadowOffsetX = Math.cos(p_noteRotation + Math.PI/4) * 2; // Reduced shadow offset
+            itemCtx.shadowOffsetY = Math.sin(p_noteRotation + Math.PI/4) * 2;
+            itemCtx.fillRect(-labelWidth / 2, -labelHeight / 2, labelWidth, labelHeight); 
+            itemCtx.shadowColor = 'transparent'; 
+            
+            const currentPostItDimForSpeckles = Math.min(labelWidth, labelHeight);
+            const speckleCount = Math.floor((labelWidth * labelHeight) / (currentPostItDimForSpeckles < 60 ? 180 : 120) ); // Adjusted speckle density
+            const speckleColors = ['rgba(0,0,0,0.10)','rgba(0,0,0,0.09)','rgba(80,60,20,0.07)']; 
+            for (let i = 0; i < speckleCount; i++) {
+                const x = (Math.random() - 0.5) * labelWidth * 0.95;
+                const y = (Math.random() - 0.5) * labelHeight * 0.95;
+                const radius = Math.random() * 0.8 + 0.4; // Smaller speckles
+                itemCtx.beginPath(); itemCtx.arc(x, y, radius, 0, Math.PI * 2);
+                itemCtx.fillStyle = speckleColors[Math.floor(Math.random() * speckleColors.length)]; 
+                itemCtx.fill();
+            }
+            itemCtx.globalAlpha = 1.0; 
+            itemCtx.strokeStyle = '#E0DCBE'; itemCtx.lineWidth = 0.5; // Thinner border
+            itemCtx.strokeRect(-labelWidth / 2 + 0.5, -labelHeight / 2 + 0.5, labelWidth - 1, labelHeight - 1);
+
+            itemCtx.fillStyle = p_labelTextColor; 
+            const calculatedFontSize = labelHeight * POST_IT_FONT_SCALE_VS_LABEL_HEIGHT;
+            const postItFontSize = Math.max(MIN_POST_IT_FONT_SIZE, Math.min(MAX_POST_IT_FONT_SIZE, calculatedFontSize));
+            itemCtx.font = `${postItFontSize}px Schoolbell, cursive`;
+            itemCtx.textAlign = 'center'; itemCtx.textBaseline = 'middle';
+            itemCtx.save();
+            itemCtx.rotate(p_textRotation);
+            let labelText1 = "";
+            let labelText2 = "";
+            if (labelType === 'both' || labelType === 'name_only') {
+                labelText1 = nameForPostIt ? `${nameForPostIt}` : "Owner: ???";
+            } else if (labelType === 'date_only') { labelText1 = " "; } 
+            else { labelText1 = "Who dis?!"; }
+
+            if (labelType === 'both' || labelType === 'date_only') {
+                labelText2 = dateObjForPostIt ? `${p_formattedExpDateString}` : "Exp: ???";
+            } else if (labelType === 'name_only') { labelText2 = " "; } 
+            else { labelText2 = "No info!"; }
+
+            const lineOffset = postItFontSize * 1.2; // Slightly tighter line spacing
+            itemCtx.fillText(labelText1, 0, -lineOffset / 2);
+            itemCtx.fillText(labelText2, 0, lineOffset / 2 + (postItFontSize * 0.05));
+            itemCtx.restore(); 
+            itemCtx.restore(); 
+            return itemCanvasEl;
+        }
+
+      function spawnNewItem() {
+        if (isGameOver) return;
+            if (!assetsLoaded || gameHost.style.display === 'none') {
+                setTimeout(spawnNewItem, 100); return;
+            }
+            if (possibleItems.length === 0) { 
+                console.error("No items to spawn!"); return; 
+            }
+
+            if (canvas.width === 0 || canvas.height === 0) {
+                if (!resizeCanvas()) {
+                    setTimeout(spawnNewItem, 100); return;
+                }
+            }
+            
+            let currentItemDrawWidth = canvas.width * ITEM_SCALE_VS_CANVAS_WIDTH;
+            let aspectRatio = ITEM_ORIGINAL_HEIGHT / ITEM_ORIGINAL_WIDTH;
+            if (ITEM_ORIGINAL_WIDTH === 0) aspectRatio = 1;
+            let currentItemDrawHeight = currentItemDrawWidth * aspectRatio;
+
+            const maxPixelDrawSize = Math.min(canvas.width * 0.6, canvas.height * 0.45); // Max height constraint a bit tighter for portrait
+            const minPixelDrawSize = Math.max(60, canvas.width * 0.15); // Adjusted min pixel size
+
+            if (currentItemDrawWidth > maxPixelDrawSize) { currentItemDrawWidth = maxPixelDrawSize; currentItemDrawHeight = currentItemDrawWidth * aspectRatio; }
+            if (currentItemDrawHeight > maxPixelDrawSize) { currentItemDrawHeight = maxPixelDrawSize; currentItemDrawWidth = currentItemDrawHeight / aspectRatio; }
+            if (currentItemDrawWidth < minPixelDrawSize) { currentItemDrawWidth = minPixelDrawSize; currentItemDrawHeight = currentItemDrawWidth * aspectRatio; }
+            if (currentItemDrawHeight < minPixelDrawSize) { currentItemDrawHeight = minPixelDrawSize; currentItemDrawWidth = currentItemDrawHeight / aspectRatio; }
+
+            currentItemDrawWidth = Math.max(1, currentItemDrawWidth);
+            currentItemDrawHeight = Math.max(1, currentItemDrawHeight);
+
+            playSfx(popSound);
+            showMessageAndPlayVoice(getRandomMessage('spawn'));
+
+            const itemDefinition = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+            const itemImage = itemImages[itemDefinition.id];
+            
+            let actualOwnerNameForItem = null, actualExpirationDateForItem = null;
+            let isActuallyExpired = false, nameForPostIt = null, dateObjForPostIt = null;
+            let labelType = '', correctBin = '';
+
+            function generateDateObject(options = { makeExpired: false, makeFuture: true }) {
+                let date = new Date();
+                let daysOffset = options.makeExpired ? -(Math.random() * 60 + 10) : (Math.random() * 60 + 5);
+                date.setDate(date.getDate() + Math.floor(daysOffset));
+                return date;
+            }
+            function getRandomOwnerName() { return funnyOwnerNames[Math.floor(Math.random() * funnyOwnerNames.length)]; }
+
+            const categoryRoll = Math.random();
+            if (categoryRoll < 0.25) { // CORRECTLY_LABELED
+                actualOwnerNameForItem = getRandomOwnerName(); actualExpirationDateForItem = generateDateObject({ makeFuture: true });
+                isActuallyExpired = false; nameForPostIt = actualOwnerNameForItem; dateObjForPostIt = actualExpirationDateForItem;
+                labelType = 'both'; correctBin = 'correctly_labeled';
+            } else if (categoryRoll < 0.50) { // EXPIRED
+                isActuallyExpired = true; actualExpirationDateForItem = generateDateObject({ makeExpired: true });
+                dateObjForPostIt = actualExpirationDateForItem;
+                if (Math.random() < 0.7) { actualOwnerNameForItem = getRandomOwnerName(); nameForPostIt = actualOwnerNameForItem; labelType = 'both'; } 
+                else { labelType = 'date_only'; }
+                correctBin = 'expired';
+            } else if (categoryRoll < 0.75) { // NAME_MISSING
+                actualExpirationDateForItem = generateDateObject({ makeFuture: true }); isActuallyExpired = false;
+                dateObjForPostIt = actualExpirationDateForItem; labelType = 'date_only'; correctBin = 'name_missing';
+            } else { // DATE_MISSING
+                actualOwnerNameForItem = getRandomOwnerName(); isActuallyExpired = false;
+                nameForPostIt = actualOwnerNameForItem; labelType = 'name_only'; correctBin = 'date_missing';
+            }
+            
+            if (itemDefinition.id === "hunny" && actualOwnerNameForItem !== null && Math.random() < 0.6) {
+                actualOwnerNameForItem = "W. Pooh"; nameForPostIt = "W. Pooh";
+            }
+            if (dateObjForPostIt != null && nameForPostIt === "Not Yours" && !isActuallyExpired) {
+                correctBin = 'name_missing';
+            }
+
+            const chosenLabelTextColor = labelTextColors[Math.floor(Math.random() * labelTextColors.length)];
+            const formattedExpDateStringToDisplay = dateObjForPostIt ? getRandomDateFormat(dateObjForPostIt) : "??.??";
+            const targetPostItSizeForThisItem = Math.max(20, Math.min(currentItemDrawWidth, currentItemDrawHeight) * POST_IT_SCALE_VS_ITEM_DIMENSION);
+            const postItRandomWidthFactor = (Math.random() - 0.5) * 0.2, postItRandomHeightFactor = (Math.random() - 0.5) * 0.2;
+            const postItRotation = (Math.random() - 0.5) * 0.25, textRotation = (Math.random() - 1) * 0.05;   
+            const horizontalSide = Math.random() < 0.5 ? -1 : 1, verticalSide = Math.random() < 0.5 ? -1 : 1;
+            const postItBiasXFactor = horizontalSide * 0.20, postItBiasYFactor = verticalSide * 0.20;
+            const postItJitterXFactor = (Math.random() - 0.5) * 0.05, postItJitterYFactor = (Math.random() - 0.5) * 0.05;
+
+           const itemDisplayCanvas = createItemCanvas(
+                itemImage, nameForPostIt, dateObjForPostIt, labelType,
+                currentItemDrawWidth, currentItemDrawHeight,
+                targetPostItSizeForThisItem, postItRandomWidthFactor, postItRandomHeightFactor,
+                postItRotation, textRotation, postItBiasXFactor, postItBiasYFactor,
+                postItJitterXFactor, postItJitterYFactor,
+                formattedExpDateStringToDisplay, chosenLabelTextColor
+            );
+            
+            if (!itemDisplayCanvas || itemDisplayCanvas.width === 0 || itemDisplayCanvas.height === 0) {
+                setTimeout(spawnNewItem, 100); return;
+            }
+            
+            // Dynamic targetY calculation for better positioning on different screen sizes/orientations
+            const topHudHeight = document.getElementById('gameTopHud') ? document.getElementById('gameTopHud').offsetHeight : (canvas.height * 0.05); // Estimate if not rendered
+            const uiContainerHeight = document.getElementById('gameUiContainer') ? document.getElementById('gameUiContainer').offsetHeight : (canvas.height * 0.3); // Estimate
+            const availableCanvasHeight = canvas.height - topHudHeight - uiContainerHeight;
+            let dynamicTargetY = topHudHeight + (availableCanvasHeight / 2) - (itemDisplayCanvas.height / 2);
+            dynamicTargetY = Math.max(topHudHeight + 10, dynamicTargetY); // Ensure it's below HUD
+            dynamicTargetY = Math.min(dynamicTargetY, canvas.height - uiContainerHeight - itemDisplayCanvas.height - 10); // Ensure it's above UI container
+
+            currentItem = {
+                imageCanvas: itemDisplayCanvas, actualOwnerName: actualOwnerNameForItem, 
+                actualExpirationDate: actualExpirationDateForItem, isActuallyExpired: isActuallyExpired, 
+                nameForPostIt: nameForPostIt, dateObjForPostIt: dateObjForPostIt, 
+                formattedExpDateString: formattedExpDateStringToDisplay, labelTextColor: chosenLabelTextColor, 
+                labelType: labelType, itemDefinition: itemDefinition, correctBin: correctBin, 
+                width: itemDisplayCanvas.width, height: itemDisplayCanvas.height,
+                x: canvas.width / 2 - itemDisplayCanvas.width / 2, y: -(itemDisplayCanvas.height), 
+                targetY: dynamicTargetY, // Using dynamically calculated Y
+                isDragging: false, isFalling: true, dragOffsetX: 0, dragOffsetY: 0,
+                dragRotation: 0, lastInteractionX: 0, // Renamed from lastMouseX
+
+                postItTargetSize: targetPostItSizeForThisItem,
+                postItWidthFactor: postItRandomWidthFactor, postItHeightFactor: postItRandomHeightFactor,
+                postItNoteRotation: postItRotation, postItTextRotation: textRotation,
+                postItBiasXFactor: postItBiasXFactor, postItBiasYFactor: postItBiasYFactor,
+                postItJitterXFactor: postItJitterXFactor, postItJitterYFactor: postItJitterYFactor
+            };
+            setCanvasCursor();
+        }
+
+        function drawItem() {
+            if (!currentItem) return;
+            ctx.save(); 
+            const itemCenterX = currentItem.x + currentItem.width / 2;
+            const itemCenterY = currentItem.y + currentItem.height / 2;
+            ctx.translate(itemCenterX, itemCenterY);
+            ctx.rotate(currentItem.dragRotation);
+            ctx.drawImage( currentItem.imageCanvas, -currentItem.width / 2, -currentItem.height / 2, currentItem.width, currentItem.height );
+            ctx.restore(); 
+        }
+
+        function updateItemPosition() {
+            if (!currentItem || currentItem.isDragging) return;
+            if (currentItem.isFalling) {
+                const dy = currentItem.targetY - currentItem.y;
+                if (Math.abs(dy) < 1) {
+                    currentItem.y = currentItem.targetY; currentItem.isFalling = false;
+                    canvas.classList.remove('item-pop'); 
+                    void canvas.offsetWidth; 
+                    canvas.classList.add('item-pop');
+                    if (!currentItem.isDragging) canvas.style.cursor = 'grab';
+                } else { currentItem.y += dy * 0.08; }
+            }
+        }
+        
+        function setCanvasCursor() { // Mainly for desktop, harmless on mobile
+            if (!currentItem || gameHost.style.display === 'none') { canvas.style.cursor = 'grab'; return; }
+            if (currentItem.isDragging) { canvas.style.cursor = 'grabbing'; } 
+            else if (!currentItem.isFalling) { canvas.style.cursor = 'grab'; } 
+            else { canvas.style.cursor = 'grab'; }
+        }
+
+        // --- Event Handlers for Mouse and Touch ---
+        function handleDragStart(e) {
+            if (isGameOver || !currentItem || (e.type === 'mousedown' && e.button !== 0)) return;
+             if (e.type === 'touchstart') e.preventDefault(); // Prevent default touch actions like scroll/zoom only if dragging starts
+
+            const coords = getEventCoordinates(e, canvas);
+            const interactionX = coords.x;
+            const interactionY = coords.y;
+
+            if (interactionX >= currentItem.x && interactionX <= currentItem.x + currentItem.width &&
+                interactionY >= currentItem.y && interactionY <= currentItem.y + currentItem.height) {
+                
+                currentItem.isFalling = false; 
+                currentItem.isDragging = true;
+                currentItem.dragOffsetX = interactionX - currentItem.x;
+                currentItem.dragOffsetY = interactionY - currentItem.y;
+                currentItem.lastInteractionX = interactionX; // Initialize for rotation
+                setCanvasCursor(); 
+            }
+        }
+
+        function handleDragMove(e) {
+            if (isGameOver || !currentItem || !currentItem.isDragging) {
+                if (currentlyOverlappedBinType) {
+                    binsElements[currentlyOverlappedBinType].classList.remove('drag-over');
+                    currentlyOverlappedBinType = null;
+                }
+                return;
+            }
+            e.preventDefault(); // Critical for touchmove to prevent page scroll
+            
+            const coords = getEventCoordinates(e, canvas);
+            const interactionXInCanvas = coords.x;
+            const interactionYInCanvas = coords.y;
+
+            if (currentItem.lastInteractionX !== 0) { 
+                const dx = interactionXInCanvas - currentItem.lastInteractionX;
+                const tiltFactor = 0.01; 
+                let targetRotation = dx * tiltFactor;
+                const maxTilt = 0.35; 
+                targetRotation = Math.max(-maxTilt, Math.min(maxTilt, targetRotation));
+                currentItem.dragRotation += (targetRotation - currentItem.dragRotation) * 0.2; 
+            }
+            currentItem.lastInteractionX = interactionXInCanvas;
+            currentItem.x = interactionXInCanvas - currentItem.dragOffsetX;
+            currentItem.y = interactionYInCanvas - currentItem.dragOffsetY;
+
+            const binTypeActuallyOverlapped = checkItemOverlapWithBins();
+            if (binTypeActuallyOverlapped) {
+                if (currentlyOverlappedBinType && currentlyOverlappedBinType !== binTypeActuallyOverlapped) {
+                    binsElements[currentlyOverlappedBinType].classList.remove('drag-over');
+                }
+                if (binsElements[binTypeActuallyOverlapped]) { 
+                    binsElements[binTypeActuallyOverlapped].classList.add('drag-over');
+                    currentlyOverlappedBinType = binTypeActuallyOverlapped;
+                }
+            } else {
+                if (currentlyOverlappedBinType) {
+                    binsElements[currentlyOverlappedBinType].classList.remove('drag-over');
+                    currentlyOverlappedBinType = null;
+                }
+            }
+        }
+
+        function handleDragEnd(e) {
+            if (isGameOver || !currentItem || !currentItem.isDragging ) return;
+             // For touchend, e.button check is not applicable. For mouseup, it's good.
+            if (e.type === 'mouseup' && e.button !== 0) return;
+
+
+            const droppedOnBinType = checkItemOverlapWithBins(); 
+
+            if (currentlyOverlappedBinType) { 
+                binsElements[currentlyOverlappedBinType].classList.remove('drag-over');
+                currentlyOverlappedBinType = null;
+            }
+
+            currentItem.isDragging = false;
+            currentItem.lastInteractionX = 0; // Reset for rotation logic
+            
+            if (droppedOnBinType) {
+                if (droppedOnBinType === currentItem.correctBin) {
+                    if (gameMode === 'regular') {
+                        updateScore(10); increaseCombo();
+                    } else { 
+                        itemsSortedCount++; updateScore(0); 
+                    }
+                    showMessageAndPlayVoice(getRandomMessage('correct'));
+                    playSfx(dingSound);
+                    currentItem = null; 
+                    setTimeout(spawnNewItem, 600); // Slightly faster respawn
+                } else {
+                    if (gameMode === 'regular') updateScore(-5); // Only penalize in regular mode
+                    resetCombo();
+                    showMessageAndPlayVoice(getRandomMessage('incorrect'));
+                    playSfx(buzzSound);
+                    // Recalculate targetY in case screen orientation/size changed during drag
+                    const topHudHeight = document.getElementById('gameTopHud').offsetHeight;
+                    const uiContainerHeight = document.getElementById('gameUiContainer').offsetHeight;
+                    const availableCanvasHeight = canvas.height - topHudHeight - uiContainerHeight;
+                    currentItem.targetY = topHudHeight + (availableCanvasHeight / 2) - (currentItem.height / 2);
+                    currentItem.targetY = Math.max(topHudHeight + 10, currentItem.targetY);
+                    currentItem.targetY = Math.min(currentItem.targetY, canvas.height - uiContainerHeight - currentItem.height -10);
+
+
+                    currentItem.x = canvas.width / 2 - currentItem.width / 2;
+                    currentItem.y = currentItem.targetY;
+                    currentItem.isFalling = false; 
+                }
+            } else { 
+                if (currentItem) { // Item exists but not dropped on bin
+                    // Recalculate targetY similarly
+                    const topHudHeight = document.getElementById('gameTopHud').offsetHeight;
+                    const uiContainerHeight = document.getElementById('gameUiContainer').offsetHeight;
+                    const availableCanvasHeight = canvas.height - topHudHeight - uiContainerHeight;
+                    currentItem.targetY = topHudHeight + (availableCanvasHeight / 2) - (currentItem.height / 2);
+                    currentItem.targetY = Math.max(topHudHeight + 10, currentItem.targetY);
+                     currentItem.targetY = Math.min(currentItem.targetY, canvas.height - uiContainerHeight - currentItem.height -10);
+
+                    currentItem.x = canvas.width / 2 - currentItem.width / 2;
+                    currentItem.y = currentItem.targetY;
+                    currentItem.isFalling = false;
+                }
+            }
+            setCanvasCursor(); 
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', handleDragStart);
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+        canvas.addEventListener('mouseleave', () => { 
+             if (currentItem && !currentItem.isDragging) { // Only reset cursor if not actively dragging out
+                 canvas.style.cursor = 'default';
+             }
+        });
+
+        // Touch events
+        canvas.addEventListener('touchstart', handleDragStart, { passive: false }); // passive:false to allow preventDefault in handler if needed
+        document.addEventListener('touchmove', handleDragMove, { passive: false }); // passive:false is essential for preventDefault
+        document.addEventListener('touchend', handleDragEnd);
+        document.addEventListener('touchcancel', handleDragEnd); // Treat cancel like end
+
+   function gameLoop() {
+       ctx.clearRect(0, 0, canvas.width, canvas.height);
+       if (assetsLoaded && currentItem) {
+           if (!isGameOver) { 
+               updateItemPosition();
+               drawItem();
+           }
+       }
+       if (currentCombo > 0 && comboTimeoutId && !isGameOver) { 
+           const elapsedComboTime = Date.now() - comboTimeoutStartTime;
+           let remainingComboPercentage = 1 - (elapsedComboTime / COMBO_TIMEOUT_DURATION);
+           remainingComboPercentage = Math.max(0, remainingComboPercentage); 
+           comboTimerBar.style.width = `${remainingComboPercentage * 100}%`;
+       } else {
+           if (comboTimerBarContainer.style.display !== 'none') {
+               comboTimerBarContainer.style.display = 'none';
+           }
+       }
+       requestAnimationFrame(gameLoop);
+   }
+
+
+    function initiateGameStartLogic() {
+            introScreen.style.display = 'none';
+            gameHost.style.display = 'flex';
+            gameOverScreen.style.display = 'none';
+            score = 0;
+            itemsSortedCount = 0;
+            isGameOver = false; 
+
+            if (gameMode === 'regular') {
+                scoreBoard.textContent = `Score: 0 ✨`;
+                gameTimerDisplay.style.display = 'block'; 
+                finalScoreText.style.display = 'block'; 
+            } else { 
+                scoreBoard.textContent = `Sorted: 0 💅`;
+                gameTimerDisplay.textContent = `Time: ∞ ✨`;
+                gameTimerDisplay.style.display = 'block'; 
+                finalScoreText.style.display = 'none'; 
+            }
+
+           function attemptActualGameStart() {
+                if (resizeCanvas()) { // resizeCanvas also sets initial item position if any (not here though)
+                    startGameTimer(); 
+                    updateTodaysDateDisplay();
+                    resetCombo(); 
+
+                    bgMusic.currentTime = 0; 
+                    bgMusic.play().catch(error => {
+                        console.warn("Background music couldn't play automatically, babe.", error);
+                        // Try to play a silent sound on first user interaction to unlock audio context
+                        const firstInteractionHandler = () => {
+                            const silentSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+                            silentSound.play().catch(()=>{});
+                            bgMusic.play().catch(err => console.warn("Still can't play music after interaction:", err));
+                            document.removeEventListener('click', firstInteractionHandler);
+                            document.removeEventListener('touchstart', firstInteractionHandler);
+                        };
+                        document.addEventListener('click', firstInteractionHandler, {once: true});
+                        document.addEventListener('touchstart', firstInteractionHandler, {once: true});
+                    });
+                    
+                    const checkAssetsAndStartLoop = () => {
+                        if (assetsLoaded) {
+                            // Ensure UI elements that affect item spawn position are sized before first spawn
+                            requestAnimationFrame(() => { // Wait for next frame for layout to settle
+                                spawnNewItem(); 
+                                gameLoop();
+                            });
+                        } else {
+                            setTimeout(checkAssetsAndStartLoop, 100); 
+                        }
+                    };
+                    checkAssetsAndStartLoop();
+                } else {
+                    requestAnimationFrame(attemptActualGameStart); // Retry resize if it failed (e.g. host not sized yet)
+                }
+            }
+            // Wait for gameHost to be visible and have dimensions
+            requestAnimationFrame(attemptActualGameStart); 
+        }
+
+        startButton.addEventListener('click', () => {
+            gameMode = 'regular';
+            initiateGameStartLogic();
+        });
+        startEndlessButton.addEventListener('click', () => {
+            gameMode = 'endless';
+            initiateGameStartLogic();
+        });
+
+
+        window.addEventListener('resize', () => {
+            // A short timeout can help if resize events fire too rapidly or before layout is stable
+            setTimeout(() => {
+                if (gameHost.style.display !== 'none' && !isGameOver) { // Only resize if game is active
+                    resizeCanvas();
+                    // Current item position is handled within resizeCanvas if it's not being dragged
+                }
+                setCanvasCursor(); 
+            }, 50);
+        });
+
+        // Check if any image failed to load initially, primarily for the milk.png example.
+        // Now preloadItemImages handles general image loading.
+        // if (!milkImage.src) { // milkImage is not a global preloaded var anymore
+        //      messageArea.textContent = "Hmm, looks like we're having trouble loading images, sweetie. Try refreshing?";
+        // }
+
+         function updateComboDisplay() {
+            if (currentCombo > 0) {
+                let displayText = `x${currentCombo}`;
+                if (currentCombo >= maxCombo) {
+                    displayText = comboMessages[maxCombo] || `✨MAX COMBO x${currentCombo}✨`; 
+                } else if (comboMessages[currentCombo]) {
+                    displayText = `${comboMessages[currentCombo]} (x${currentCombo})`;
+                }
+                comboDisplay.textContent = displayText;
+                comboDisplay.classList.add('active'); 
+                comboDisplay.classList.remove('pop'); 
+                void comboDisplay.offsetWidth; 
+                comboDisplay.classList.add('pop'); 
+           } else {
+               comboTimerBarContainer.style.display = 'none'; 
+               comboDisplay.textContent = "";
+               comboDisplay.classList.remove('active'); 
+           }
+        }
+
+        function increaseCombo() {
+           clearTimeout(comboTimeoutId); 
+           currentCombo = Math.min(currentCombo + 1, maxCombo);
+           comboTimeoutStartTime = Date.now(); 
+           comboTimerBarContainer.style.display = 'block'; 
+           updateComboDisplay();
+           comboTimeoutId = setTimeout(resetCombo, COMBO_TIMEOUT_DURATION);
+        }
+
+       function resetCombo() {
+           clearTimeout(comboTimeoutId); 
+           currentCombo = 0;
+           comboTimerBarContainer.style.display = 'none'; 
+           if(comboTimerBar) comboTimerBar.style.width = '100%'; 
+           updateComboDisplay();
+       }
+
+        function startGameTimer() {
+            if (gameTimerIntervalId) clearInterval(gameTimerIntervalId);
+            isGameOver = false; 
+            if (gameMode === 'regular') {
+                gameTimeRemaining = GAME_DURATION;
+                gameTimerDisplay.textContent = `Time: ${gameTimeRemaining}s`;
+                gameTimerDisplay.style.display = 'block';
+                gameTimerIntervalId = setInterval(() => {
+                    gameTimeRemaining--;
+                    gameTimerDisplay.textContent = `Time: ${gameTimeRemaining}s`;
+                    if (gameTimeRemaining <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            } else { 
+                gameTimerDisplay.textContent = `Time: ∞ ✨`;
+                gameTimerDisplay.style.display = 'block'; 
+            }
+        }
+
+        function endGame() {
+            if (gameMode !== 'regular' && gameTimeRemaining > 0 && !isGameOver) return; // Guard for endless
+            if (isGameOver && gameMode === 'regular') return; // Prevent multiple calls in regular mode
+
+            isGameOver = true;
+            clearInterval(gameTimerIntervalId);
+            if (gameMode === 'regular') {
+                gameTimerDisplay.textContent = "Time's Up!";
+            }
+            
+            if(currentItem) currentItem = null; 
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            
+            if (gameMode === 'regular') {
+                finalScoreText.textContent = `Your Score: ${score} ✨`;
+                gameOverScreen.style.display = 'flex';
+            }
+            
+            bgMusic.pause(); 
+            resetCombo(); 
+        }
+
+        playAgainButton.addEventListener('click', () => {
+            // This button only appears after regular mode, so it implies regular mode restart.
+            // initiateGameStartLogic will use the gameMode that was last set.
+            // If we want to force it: gameMode = 'regular';
+            initiateGameStartLogic(); 
+        });
+    </script>
+</body>
+</html>
